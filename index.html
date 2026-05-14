@@ -2,25 +2,56 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>傳說中的骨頭</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:#0a0006; display:flex; flex-direction:column;
-  align-items:center; justify-content:center; min-height:100vh;
+body {
+  background:#0a0006; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  min-height:100vh; min-height:100dvh;
+  overflow:hidden; touch-action:none;
   font-family:'Microsoft JhengHei','微軟正黑體',sans-serif; user-select:none; }
-#hd { color:#ff6b35; font-size:26px; font-weight:bold;
-  text-shadow:0 0 20px #ff6b35; margin-bottom:6px; letter-spacing:2px; }
-#sub { color:#ffaa55; font-size:12px; margin-bottom:10px; }
-canvas { border:3px solid #ff6b35; border-radius:6px;
-  box-shadow:0 0 28px rgba(255,107,53,.45); }
+#hd { color:#ff6b35; font-size:clamp(14px,4vw,26px); font-weight:bold;
+  text-shadow:0 0 20px #ff6b35; margin-bottom:4px; letter-spacing:2px; }
+#sub { color:#ffaa55; font-size:clamp(10px,2.5vw,12px); margin-bottom:6px; }
+#game-wrap { position:relative; }
+canvas { display:block; width:100%; height:auto;
+  border:3px solid #ff6b35; border-radius:6px;
+  box-shadow:0 0 28px rgba(255,107,53,.45); touch-action:none; }
 #ctrl { color:#777; font-size:12px; margin-top:8px; text-align:center; }
 #ctrl span { color:#ffaa55; }
+/* ── Touch Controls ── */
+#touch-ctrl { display:none; position:absolute; inset:0; pointer-events:none; }
+.tbtn {
+  position:absolute; pointer-events:all;
+  background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.22);
+  border-radius:50%; width:18%; aspect-ratio:1/1;
+  color:rgba(255,255,255,.75); font-size:clamp(16px,5vw,28px);
+  display:flex; align-items:center; justify-content:center;
+  touch-action:none; user-select:none; -webkit-user-select:none;
+  transition:background .08s; }
+.tbtn:active { background:rgba(255,255,255,.28); }
+#btn-left  { bottom:5%; left:3%; }
+#btn-right { bottom:5%; left:24%; }
+#btn-jump  { bottom:5%; right:3%; }
+@media (pointer:coarse) {
+  #touch-ctrl { display:block; }
+  #ctrl { display:none; } }
+@media (max-height:500px) { #hd, #sub { display:none; } }
 </style>
 </head>
 <body>
 <div id="hd">🦴 傳說中的骨頭</div>
 <div id="sub">⋯ 有膽就進來 ⋯</div>
-<canvas id="c" width="800" height="480"></canvas>
+<div id="game-wrap">
+  <canvas id="c" width="800" height="480"></canvas>
+  <div id="touch-ctrl">
+    <div class="tbtn" id="btn-left">◀</div>
+    <div class="tbtn" id="btn-right">▶</div>
+    <div class="tbtn" id="btn-jump">▲</div>
+  </div>
+</div>
 <div id="ctrl"><span>← →</span> 移動 | <span>↑/空白</span> 跳 | <span>R</span> 重試當關</div>
 <script>
 'use strict';
@@ -980,6 +1011,39 @@ function loop(){
   if(state==='win')drawWinScreen();
   requestAnimationFrame(loop);
 }
+/* ═══ RWD: 畫面縮放 ════════════════════════════════════════════════ */
+function resizeGame(){
+  const wrap=document.getElementById('game-wrap');
+  const hd=document.getElementById('hd');
+  const sub=document.getElementById('sub');
+  const usedH=(hd?.offsetHeight||0)+(sub?.offsetHeight||0)+20;
+  const maxW=Math.min(800,window.innerWidth);
+  const maxH=window.innerHeight-usedH;
+  const wFromH=maxH*(800/480);
+  wrap.style.width=Math.min(maxW,wFromH)+'px';
+}
+window.addEventListener('resize',resizeGame);
+window.addEventListener('orientationchange',()=>setTimeout(resizeGame,120));
+resizeGame();
+
+/* ═══ 觸控按鈕 ══════════════════════════════════════════════════════ */
+(function(){
+  function holdKey(code,down){
+    K[code]=down;
+    window.dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{code,bubbles:true}));
+  }
+  [['btn-left','ArrowLeft'],['btn-right','ArrowRight'],['btn-jump','ArrowUp']].forEach(([id,code])=>{
+    const el=document.getElementById(id);
+    el.addEventListener('touchstart',e=>{e.preventDefault();holdKey(code,true)},{passive:false});
+    el.addEventListener('touchend',  e=>{e.preventDefault();holdKey(code,false)},{passive:false});
+    el.addEventListener('touchcancel',e=>{holdKey(code,false)},{passive:false});
+  });
+  // 勝利畫面：跳躍鍵同時觸發重新開始
+  document.getElementById('btn-jump').addEventListener('touchstart',()=>{
+    if(state==='win')window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyR',bubbles:true}));
+  },{passive:false});
+})();
+
 requestAnimationFrame(loop);
 </script>
 </body>
