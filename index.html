@@ -71,9 +71,30 @@ canvas { display:block; width:100%; height:auto;
   touch-action:none; user-select:none; -webkit-user-select:none;
   transition:background .08s; }
 .tbtn:active { background:rgba(255,255,255,.28); }
-#btn-left  { bottom:5%; left:3%; }
-#btn-right { bottom:5%; left:24%; }
-#btn-jump  { bottom:5%; right:3%; }
+#btn-jump { bottom:5%; right:3%; }
+#joystick {
+  position:absolute; pointer-events:all;
+  bottom:4%; left:3%;
+  width:28%; aspect-ratio:1/1;
+  border-radius:50%;
+  background:rgba(255,255,255,.07);
+  border:2px solid rgba(255,255,255,.22);
+  touch-action:none; user-select:none; -webkit-user-select:none; }
+#joystick-knob {
+  position:absolute; border-radius:50%;
+  width:42%; aspect-ratio:1/1;
+  background:rgba(255,200,120,.35);
+  border:2px solid rgba(255,170,85,.65);
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  box-shadow:0 0 10px rgba(255,107,53,.4); }
+#joystick-arrow-l, #joystick-arrow-r {
+  position:absolute; top:50%; transform:translateY(-50%);
+  color:rgba(255,255,255,.25); font-size:clamp(10px,3vw,16px);
+  pointer-events:none; }
+#joystick-arrow-l { left:8%; }
+#joystick-arrow-r { right:8%; }
 @media (pointer:coarse) {
   #touch-ctrl { display:block; }
   #ctrl { display:none; } }
@@ -86,8 +107,11 @@ canvas { display:block; width:100%; height:auto;
 <div id="game-wrap">
   <canvas id="c" width="800" height="480"></canvas>
   <div id="touch-ctrl">
-    <div class="tbtn" id="btn-left">◀</div>
-    <div class="tbtn" id="btn-right">▶</div>
+    <div id="joystick">
+      <span id="joystick-arrow-l">◀</span>
+      <div id="joystick-knob"></div>
+      <span id="joystick-arrow-r">▶</span>
+    </div>
     <div class="tbtn" id="btn-jump">▲</div>
   </div>
 </div>
@@ -1351,16 +1375,73 @@ resizeGame();
     K[code]=down;
     window.dispatchEvent(new KeyboardEvent(down?'keydown':'keyup',{code,bubbles:true}));
   }
-  [['btn-left','ArrowLeft'],['btn-right','ArrowRight'],['btn-jump','ArrowUp']].forEach(([id,code])=>{
-    const el=document.getElementById(id);
-    el.addEventListener('touchstart',e=>{e.preventDefault();holdKey(code,true)},{passive:false});
-    el.addEventListener('touchend',  e=>{e.preventDefault();holdKey(code,false)},{passive:false});
-    el.addEventListener('touchcancel',e=>{holdKey(code,false)},{passive:false});
-  });
-  // 勝利畫面：跳躍鍵同時觸發重新開始
-  document.getElementById('btn-jump').addEventListener('touchstart',()=>{
+
+  /* ── Joystick ── */
+  const stick=document.getElementById('joystick');
+  const knob=document.getElementById('joystick-knob');
+  let stickTouchId=null, stickDir=0;
+  const DEAD=0.18;
+
+  function stickSetDir(dir){
+    if(dir===stickDir)return;
+    if(stickDir<0)holdKey('ArrowLeft',false);
+    if(stickDir>0)holdKey('ArrowRight',false);
+    stickDir=dir;
+    if(dir<0)holdKey('ArrowLeft',true);
+    if(dir>0)holdKey('ArrowRight',true);
+  }
+
+  function stickUpdate(clientX,clientY){
+    const r=stick.getBoundingClientRect();
+    const cx=r.left+r.width/2, cy=r.top+r.height/2, radius=r.width/2;
+    const dx=clientX-cx, dy=clientY-cy;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const cap=Math.min(dist,radius*0.48);
+    const ang=dist>0?Math.atan2(dy,dx):0;
+    knob.style.transform=`translate(calc(-50% + ${cap*Math.cos(ang)}px),calc(-50% + ${cap*Math.sin(ang)}px))`;
+    const norm=dx/radius;
+    stickSetDir(norm<-DEAD?-1:norm>DEAD?1:0);
+  }
+
+  function stickReset(){
+    stickTouchId=null;
+    stickSetDir(0);
+    knob.style.transform='translate(-50%,-50%)';
+  }
+
+  stick.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(stickTouchId!==null)return;
+    const t=e.changedTouches[0];
+    stickTouchId=t.identifier;
+    stickUpdate(t.clientX,t.clientY);
+  },{passive:false});
+
+  stick.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    const t=[...e.changedTouches].find(t=>t.identifier===stickTouchId);
+    if(t)stickUpdate(t.clientX,t.clientY);
+  },{passive:false});
+
+  stick.addEventListener('touchend',e=>{
+    const t=[...e.changedTouches].find(t=>t.identifier===stickTouchId);
+    if(t)stickReset();
+  },{passive:false});
+
+  stick.addEventListener('touchcancel',e=>{
+    const t=[...e.changedTouches].find(t=>t.identifier===stickTouchId);
+    if(t)stickReset();
+  },{passive:false});
+
+  /* ── Jump button ── */
+  const jumpEl=document.getElementById('btn-jump');
+  jumpEl.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    holdKey('ArrowUp',true);
     if(state==='win')window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyR',bubbles:true}));
   },{passive:false});
+  jumpEl.addEventListener('touchend',  e=>{e.preventDefault();holdKey('ArrowUp',false);},{passive:false});
+  jumpEl.addEventListener('touchcancel',e=>{holdKey('ArrowUp',false);},{passive:false});
 })();
 
 requestAnimationFrame(loop);
