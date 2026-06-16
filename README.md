@@ -20,7 +20,8 @@
 | --- | --- |
 | `←` / `→` 或 `A` / `D` | 移動 |
 | `↑` / `Space` / `W` / `Z` | 跳躍 |
-| `R` | 重新挑戰目前關卡；通關畫面可重新開始 |
+| `R` | 重新挑戰目前關卡；通關畫面可重新開始整場遊戲 |
+| 死亡畫面按跳躍鍵 | 立即跳過等待，重新挑戰目前關卡（效果同 `R`） |
 | 虛擬搖桿 + 跳躍鍵 | 手機和平板可用螢幕左側搖桿控制方向、右側跳躍鍵起跳 |
 
 ### 設定選單
@@ -61,8 +62,10 @@
 
 ```text
 legendary-bone/
-├── index.html  # 遊戲本體、樣式、音效、設定與語系邏輯
-└── README.md   # 操作與功能說明
+├── index.html       # 遊戲本體、樣式、音效、設定與語系邏輯
+├── test/            # 自動化測試（僅開發時使用，遊戲本身不需要）
+├── package.json     # 測試用的相依套件設定
+└── README.md        # 操作與功能說明
 ```
 
 ### 技術
@@ -70,7 +73,16 @@ legendary-bone/
 - HTML5 Canvas 2D
 - 原生 JavaScript
 - Web Audio API
-- 無需建置工具或外部依賴
+- 無需建置工具或外部依賴，`index.html` 可直接在瀏覽器開啟執行
+
+### 開發與測試
+
+`index.html` 本身不需要任何安裝步驟，但專案內附了一套以 Node.js 內建測試框架 + jsdom 撰寫的自動化測試，用來驗證遊戲狀態切換、操作判定等邏輯沒有被改壞：
+
+```bash
+npm install
+npm test
+```
 
 ---
 
@@ -92,7 +104,8 @@ A single-file HTML5 Canvas browser game. Choose your hero, survive trap-filled s
 | --- | --- |
 | `←` / `→` or `A` / `D` | Move |
 | `↑` / `Space` / `W` / `Z` | Jump |
-| `R` | Retry the current stage; restart from the win screen |
+| `R` | Retry the current stage; restart the whole game from the win screen |
+| Jump key on the death screen | Skip the respawn wait immediately and retry the current stage (same effect as `R`) |
 | Virtual joystick + jump button | On phones and tablets, use the on-screen joystick (left) to move and the jump button (right) to jump |
 
 ### Settings Menu
@@ -133,8 +146,10 @@ Includes:
 
 ```text
 legendary-bone/
-├── index.html  # Game logic, styles, audio, settings, and i18n
-└── README.md   # Controls and feature reference
+├── index.html       # Game logic, styles, audio, settings, and i18n
+├── test/            # Automated tests (dev-only, not needed to play the game)
+├── package.json     # Dependency config for the test suite
+└── README.md        # Controls and feature reference
 ```
 
 ### Tech
@@ -142,7 +157,16 @@ legendary-bone/
 - HTML5 Canvas 2D
 - Vanilla JavaScript
 - Web Audio API
-- No build tools or external dependencies
+- No build tools or external dependencies — `index.html` runs directly in the browser
+
+### Development & Testing
+
+`index.html` itself needs no install step, but the repo includes an automated test suite (Node's built-in test runner + jsdom) that verifies the game's state transitions and input handling haven't regressed:
+
+```bash
+npm install
+npm test
+```
 
 ---
 
@@ -164,7 +188,8 @@ legendary-bone/
 | --- | --- |
 | `←` / `→` または `A` / `D` | 移動 |
 | `↑` / `Space` / `W` / `Z` | ジャンプ |
-| `R` | 現在のステージをリトライ；クリア画面では最初からやり直し |
+| `R` | 現在のステージをリトライ；クリア画面ではゲーム全体を最初からやり直し |
+| ミス画面でジャンプキー | 再開待ち時間をすぐにスキップして現在のステージをリトライ（`R` と同じ効果） |
 | バーチャルスティック + ジャンプボタン | スマホ・タブレットでは画面左側のスティックで移動、右側のジャンプボタンでジャンプ |
 
 ### 設定メニュー
@@ -205,8 +230,10 @@ legendary-bone/
 
 ```text
 legendary-bone/
-├── index.html  # ゲーム本体・スタイル・音声・設定・i18n
-└── README.md   # 操作説明・機能リファレンス
+├── index.html       # ゲーム本体・スタイル・音声・設定・i18n
+├── test/            # 自動テスト（開発時のみ使用、ゲーム本体には不要）
+├── package.json     # テスト用の依存関係設定
+└── README.md        # 操作説明・機能リファレンス
 ```
 
 ### 技術
@@ -214,4 +241,13 @@ legendary-bone/
 - HTML5 Canvas 2D
 - バニラ JavaScript
 - Web Audio API
-- ビルドツール・外部依存なし
+- ビルドツール・外部依存なし。`index.html` はブラウザで直接開いて実行できる
+
+### 開発とテスト
+
+`index.html` 自体はインストール不要ですが、リポジトリには Node.js 標準のテストランナーと jsdom を使った自動テストが含まれており、ゲームの状態遷移や入力判定が壊れていないか確認できます。
+
+```bash
+npm install
+npm test
+```

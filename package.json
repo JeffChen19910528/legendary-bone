@@ -1,0 +1,11 @@
+{
+  "name": "legendary-bone",
+  "private": true,
+  "description": "Test harness for the single-file index.html game. The game itself has no build step or dependencies.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^25.0.0"
+  }
+}
