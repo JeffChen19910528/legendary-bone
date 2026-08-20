@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>傳說中的骨頭</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#0a0006; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  min-height:100vh; min-height:100dvh;
+  overflow:hidden; touch-action:none;
+  font-family:'Microsoft JhengHei','微軟正黑體',sans-serif; user-select:none; }
+#hd { color:#ff6b35; font-size:clamp(14px,4vw,26px); font-weight:bold;
+  text-shadow:0 0 20px #ff6b35; margin-bottom:4px; letter-spacing:2px; }
+#sub { color:#ffaa55; font-size:clamp(10px,2.5vw,12px); margin-bottom:6px; }
+#game-wrap { position:relative; }
+canvas { display:block; width:100%; height:auto;
+  border:3px solid #ff6b35; border-radius:6px;
+  box-shadow:0 0 28px rgba(255,107,53,.45); touch-action:none; }
+#ctrl { color:#777; font-size:12px; margin-top:8px; text-align:center; }
+#ctrl span { color:#ffaa55; }
+.corner-btn {
+  position:fixed; bottom:12px; z-index:5;
+  width:42px; height:42px; border-radius:50%;
+  border:2px solid rgba(255,170,85,.65);
+  background:rgba(10,0,6,.76); color:#ffd7a0;
+  font-size:18px; cursor:pointer; touch-action:manipulation;
+  box-shadow:0 0 14px rgba(255,107,53,.25);
+}
+#sound-btn { position:fixed; bottom:12px; z-index:5; right:12px; width:42px; height:42px; border-radius:50%; border:2px solid rgba(255,170,85,.65); background:rgba(10,0,6,.76); color:#ffd7a0; font-size:18px; cursor:pointer; touch-action:manipulation; box-shadow:0 0 14px rgba(255,107,53,.25); }
+#settings-btn { right:62px; }
+.corner-btn:focus-visible,
+#settings-panel button:focus-visible,
+#settings-panel input:focus-visible,
+#settings-panel select:focus-visible { outline:2px solid #ffd700; outline-offset:2px; }
+#settings-panel {
+  position:fixed; right:12px; bottom:64px; z-index:6;
+  width:min(300px,calc(100vw - 24px)); padding:14px;
+  color:#f7e5c9; background:rgba(12,4,8,.94);
+  border:2px solid rgba(255,170,85,.55); border-radius:8px;
+  box-shadow:0 12px 34px rgba(0,0,0,.46),0 0 22px rgba(255,107,53,.18);
+  font-size:13px;
+  touch-action:auto; user-select:auto;
+}
+#settings-panel[hidden] { display:none; }
+#settings-panel h2 { margin:0 0 10px; color:#ffd700; font-size:16px; letter-spacing:0; }
+.setting-row { display:grid; gap:6px; margin:12px 0; }
+.setting-row label { display:flex; justify-content:space-between; gap:10px; color:#ffd7a0; }
+.setting-row input[type="range"] { width:100%; accent-color:#ff8f3d; touch-action:auto; }
+.setting-row select {
+  width:100%; padding:8px; border-radius:6px;
+  border:1px solid rgba(255,170,85,.55);
+  background:#1b0b0f; color:#fff;
+  touch-action:auto;
+}
+#settings-reset {
+  width:100%; margin-top:6px; padding:8px 10px; border-radius:6px;
+  border:1px solid rgba(255,170,85,.6);
+  color:#1b0b0f; background:#ffd08a; cursor:pointer;
+}
+/* ── Touch Controls ── */
+#touch-ctrl { display:none; position:absolute; inset:0; pointer-events:none; }
+.tbtn {
+  position:absolute; pointer-events:all;
+  background:rgba(255,255,255,.1); border:2px solid rgba(255,255,255,.22);
+  border-radius:50%; width:18%; aspect-ratio:1/1;
+  color:rgba(255,255,255,.75); font-size:clamp(16px,5vw,28px);
+  display:flex; align-items:center; justify-content:center;
+  touch-action:none; user-select:none; -webkit-user-select:none;
+  transition:background .08s; }
+.tbtn:active { background:rgba(255,255,255,.28); }
+#btn-jump { bottom:5%; right:3%; }
+#joystick {
+  position:absolute; pointer-events:all;
+  bottom:4%; left:3%;
+  width:28%; aspect-ratio:1/1;
+  border-radius:50%;
+  background:rgba(255,255,255,.07);
+  border:2px solid rgba(255,255,255,.22);
+  touch-action:none; user-select:none; -webkit-user-select:none; }
+#joystick-knob {
+  position:absolute; border-radius:50%;
+  width:42%; aspect-ratio:1/1;
+  background:rgba(255,200,120,.35);
+  border:2px solid rgba(255,170,85,.65);
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  box-shadow:0 0 10px rgba(255,107,53,.4); }
+#joystick-arrow-l, #joystick-arrow-r {
+  position:absolute; top:50%; transform:translateY(-50%);
+  color:rgba(255,255,255,.25); font-size:clamp(10px,3vw,16px);
+  pointer-events:none; }
+#joystick-arrow-l { left:8%; }
+#joystick-arrow-r { right:8%; }
+@media (pointer:coarse) {
+  #touch-ctrl { display:block; }
+  #ctrl { display:none; }
+  #settings-panel { bottom:104px; } }
+@media (max-height:500px) { #hd, #sub { display:none; } }
+</style>
+</head>
+<body>
+<div id="hd">🦴 傳說中的骨頭</div>
+<div id="sub">⋯ 有膽就進來 ⋯</div>
+<div id="game-wrap">
+  <canvas id="c" width="800" height="480"></canvas>
+  <div id="touch-ctrl">
+    <div id="joystick">
+      <span id="joystick-arrow-l">◀</span>
+      <div id="joystick-knob"></div>
+      <span id="joystick-arrow-r">▶</span>
+    </div>
+    <div class="tbtn" id="btn-jump">▲</div>
+  </div>
+</div>
+<div id="ctrl"><span>← →</span> 移動 | <span>↑/空白</span> 跳 | <span>R</span> 重試當關</div>
+<button id="sound-btn" type="button" aria-label="音效開關" title="音效開關">🔇</button>
+<button id="settings-btn" class="corner-btn" type="button" aria-label="設定" title="設定">⚙</button>
+<div id="settings-panel" hidden>
+  <h2 id="settings-title">設定</h2>
+  <div class="setting-row">
+    <label for="move-speed"><span id="move-speed-label">移動速度</span><strong id="move-speed-value">75%</strong></label>
+    <input id="move-speed" type="range" min="25" max="120" step="5" value="75">
+  </div>
+  <div class="setting-row">
+    <label for="game-speed"><span id="game-speed-label">遊戲速度</span><strong id="game-speed-value">80%</strong></label>
+    <input id="game-speed" type="range" min="25" max="115" step="5" value="80">
+  </div>
+  <div class="setting-row">
+    <label for="lang-select"><span id="language-label">語言</span></label>
+    <select id="lang-select">
+      <option value="zh">繁體中文</option>
+      <option value="en">English</option>
+      <option value="ja">日本語</option>
+    </select>
+  </div>
+  <button id="settings-reset" type="button">重設預設值</button>
+</div>
+<!--GAME_SCRIPT-->
+</body>
+</html>

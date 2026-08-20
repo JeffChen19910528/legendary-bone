@@ -1,11 +1,14 @@
 {
   "name": "legendary-bone",
   "private": true,
-  "description": "Test harness for the single-file index.html game. The game itself has no build step or dependencies.",
+  "description": "Sacred Bone Adventure — an HTML5 canvas platformer. Source lives as ES modules under src/ and is bundled by esbuild into a single distributable index.html (run `npm run build`) so the game still runs directly via file:// with no server. `npm test` rebuilds first, then runs the Node test suite against both the source modules and the built index.html.",
   "scripts": {
+    "build": "node build.js",
+    "pretest": "npm run build",
     "test": "node --test test/*.test.js"
   },
   "devDependencies": {
+    "esbuild": "^0.24.0",
     "jsdom": "^25.0.0"
   }
 }
